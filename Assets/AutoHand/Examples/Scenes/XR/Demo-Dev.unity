@@ -1616,7 +1616,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   topLeftPoint: {fileID: 760155545}
   topRightPoint: {fileID: 1301043943}
-  hangDistance: 0.5
+  hangDistance: 0.3
   ropeWidth: 0.5
 --- !u!114 &1311250512 stripped
 MonoBehaviour:

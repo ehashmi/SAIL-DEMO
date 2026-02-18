@@ -9,8 +9,8 @@ public class VRHangingLineSystem : MonoBehaviour
 
     [Header("Hanging Settings")]
     [Range(0.1f, 10f)]
-    public float hangDistance = 2f;     // Distance between player & anchor
-    public float ropeWidth = 0.02f;
+    public float hangDistance = 0.3f;     // Distance between player & anchor
+    public float ropeWidth = 0.5f;
 
     private LineRenderer line;
     private ConfigurableJoint joint;
