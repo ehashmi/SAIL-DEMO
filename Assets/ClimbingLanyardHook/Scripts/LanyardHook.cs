@@ -2,46 +2,35 @@ using UnityEngine;
 
 public class LanyardHook : MonoBehaviour
 {
-    public bool isConnected;
-    public Rigidbody playerRb;
+    public HookConnectionState currentState = HookConnectionState.Disconnected;
 
-    private ConfigurableJoint joint;
+    private HookAttachPoint currentAttachPoint;
 
-    public void Connect(Rigidbody ladderStep)
+    public bool IsConnected()
     {
-        if (isConnected) return;
+        return currentState == HookConnectionState.Connected;
+    }
 
-        joint = playerRb.gameObject.AddComponent<ConfigurableJoint>();
-        joint.connectedBody = ladderStep;
-
-        joint.xMotion = ConfigurableJointMotion.Limited;
-        joint.yMotion = ConfigurableJointMotion.Limited;
-        joint.zMotion = ConfigurableJointMotion.Limited;
-
-        SoftJointLimit limit = new SoftJointLimit();
-        limit.limit = 1.5f; // rope length
-        joint.linearLimit = limit;
-
-        joint.angularXMotion = ConfigurableJointMotion.Free;
-        joint.angularYMotion = ConfigurableJointMotion.Free;
-        joint.angularZMotion = ConfigurableJointMotion.Free;
-
-        isConnected = true;
+    public void Connect(HookAttachPoint point)
+    {
+        currentAttachPoint = point;
+        currentState = HookConnectionState.Connected;
     }
 
     public void Disconnect()
     {
-        if (!isConnected) return;
-
-        Destroy(joint);
-        isConnected = false;
-    }
-
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("LadderStep"))
+        if (currentAttachPoint != null)
         {
-            Connect(other.attachedRigidbody);
+            currentAttachPoint.ClearHook(this);
+            currentAttachPoint = null;
         }
+
+        currentState = HookConnectionState.Disconnected;
     }
+}
+
+public enum HookConnectionState
+{
+    Disconnected,
+    Connected
 }
