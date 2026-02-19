@@ -7,87 +7,158 @@ public class ClimbingSafetyManager : MonoBehaviour
     public LanyardHook leftHook;
     public LanyardHook rightHook;
 
-    [Header("AutoHand References")]
-    public Hand leftHand;
-    public Hand rightHand;
+    private Hand leftHand;
+    private Hand rightHand;
+    private Rigidbody playerRb;
 
-    [Header("Player Rigidbody")]
-    public Rigidbody playerRb;
+    private ConfigurableJoint activeJoint;
+    private LineRenderer ropeRenderer;
+    [SerializeField] private bool isHanging = false;
 
-    private bool isHanging = false;
+    [Range(0.1f, 10f)]
+    public float hangDistance = 0.3f;     // Distance between player & anchor
 
     void Awake()
     {
-        // 🔥 Auto find Rigidbody
-        if (playerRb == null) playerRb = GetComponent<Rigidbody>();
+        playerRb = GetComponent<Rigidbody>();
 
-        // 🔥 Auto find both hands in scene
+        // Auto find hands
         Hand[] hands = FindObjectsOfType<Hand>();
-
         foreach (Hand hand in hands)
         {
-            if (hand.left)        // AutoHand has bool left
+            if (hand.left)
                 leftHand = hand;
             else
                 rightHand = hand;
         }
 
-        if (leftHand == null || rightHand == null)
-            Debug.LogError("Hands not found automatically!");
+        // Create rope automatically
+        ropeRenderer = gameObject.AddComponent<LineRenderer>();
+        ropeRenderer.positionCount = 2;
+        ropeRenderer.startWidth = 0.1f;
+        ropeRenderer.endWidth = 0.1f;
+        ropeRenderer.enabled = false;
+        ropeRenderer.material = new Material(Shader.Find("Sprites/Default"));
     }
 
     void Update()
     {
         CheckFallCondition();
+        UpdateRope();
     }
 
     void CheckFallCondition()
     {
-        bool leftConnected = leftHook != null && leftHook.IsConnected();
-        bool rightConnected = rightHook != null && rightHook.IsConnected();
+        // bool anyHookConnected = leftHook.IsConnected() || rightHook.IsConnected();
 
-        bool anyHookConnected = leftConnected || rightConnected;
+        // // Correct AutoHand grab check
+        // bool bothHandsReleased = !leftHand.IsGrabbing() && !rightHand.IsGrabbing();
+        // // bool bothHandsReleased = leftHand.holdingObj == null && rightHand.holdingObj == null;
 
-        // 🔥 Correct AutoHand grab check
-        bool bothHandsReleased = !leftHand.IsGrabbing() && !rightHand.IsGrabbing();
-        // bool bothHandsReleased = leftHand.holdingObj == null && rightHand.holdingObj == null;
+        // if (bothHandsReleased && anyHookConnected)
+        // {
+        //     if (!isHanging)
+        //         StartHanging();
+        // }
+        // else
+        // {
+        //     if (isHanging)
+        //         StopHanging();
+        // }
 
+        bool anyHookConnected = leftHook.IsConnected() || rightHook.IsConnected();
+        bool anyHandGrabbing = leftHand.IsGrabbing() || rightHand.IsGrabbing();
+        bool bothHandsReleased = !anyHandGrabbing;
+
+        // If grabbing → always climb normally
+        if (anyHandGrabbing)
+        {
+            if (isHanging)
+                StopHanging();
+
+            return;
+        }
+
+        //Both hands released
         if (bothHandsReleased)
         {
+            // If hook connected → hang
             if (anyHookConnected)
             {
-                EnableHangingMode();
+                if (!isHanging)
+                    StartHanging();
             }
+            // If no hook → fall
             else
             {
-                EnableFreeFall();
+                if (isHanging)
+                    StopHanging();
             }
         }
-        else
+
+        // If hanging but hook disconnects
+        if (isHanging && !anyHookConnected)
         {
-            // If holding ladder again → restore gravity
-            playerRb.useGravity = true;
-            isHanging = false;
+            StopHanging();
         }
         Debug.Log("Left Connected: " + leftHook.IsConnected());
         Debug.Log("Right Connected: " + rightHook.IsConnected());
         Debug.Log("Both Hands Released: " + bothHandsReleased);
     }
 
-    void EnableHangingMode()
+    void StartHanging()
     {
-        if (isHanging) return;
-
         isHanging = true;
+        Debug.Log($"Starting to Hang! Left Connected: {leftHook.IsConnected()}, Right Connected: {rightHook.IsConnected()}");
 
-        playerRb.linearVelocity = Vector3.zero;
-        playerRb.useGravity = false;
+        playerRb.velocity = Vector3.zero;
+        playerRb.angularVelocity = Vector3.zero;
+
+        LanyardHook hookToUse = leftHook.IsConnected() ? leftHook : rightHook;
+        Rigidbody hookRb = hookToUse.GetComponent<Rigidbody>();
+
+        activeJoint = gameObject.AddComponent<ConfigurableJoint>();
+        activeJoint.connectedBody = hookRb;
+        activeJoint.autoConfigureConnectedAnchor = false;
+
+        // Anchor setup
+        activeJoint.anchor = new Vector3(0, 1.2f, 0);
+        activeJoint.connectedAnchor = Vector3.zero;
+
+        // 🔥 IMPORTANT — all Limited
+        activeJoint.xMotion = ConfigurableJointMotion.Limited;
+        activeJoint.yMotion = ConfigurableJointMotion.Limited;
+        activeJoint.zMotion = ConfigurableJointMotion.Limited;
+
+        SoftJointLimit limit = new SoftJointLimit();
+        limit.limit = hangDistance;
+        activeJoint.linearLimit = limit;
+
+        // Smooth pendulum
+        activeJoint.angularXMotion = ConfigurableJointMotion.Free;
+        activeJoint.angularYMotion = ConfigurableJointMotion.Free;
+        activeJoint.angularZMotion = ConfigurableJointMotion.Free;
+
+        activeJoint.projectionMode = JointProjectionMode.PositionAndRotation;
+
+        ropeRenderer.enabled = true;
     }
 
-    void EnableFreeFall()
+    void StopHanging()
     {
         isHanging = false;
 
-        playerRb.useGravity = true;
+        if (activeJoint != null)
+            Destroy(activeJoint);
+    }
+
+    void UpdateRope()
+    {
+        LanyardHook activeHook = leftHook.IsConnected() ? leftHook : rightHook;
+        if (!isHanging || activeHook == null)
+            return;
+        Debug.Log($"Updating Rope: Active Hook: {activeHook.name}");
+        ropeRenderer.SetPosition(0, activeHook.transform.position);
+        ropeRenderer.SetPosition(1, transform.position + Vector3.up * 1.0f);
     }
 }

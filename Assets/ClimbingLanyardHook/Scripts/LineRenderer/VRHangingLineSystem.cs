@@ -61,7 +61,7 @@ public class VRHangingLineSystem : MonoBehaviour
         joint.linearLimit = limit;
     }
 
-    Vector3 GetMidPoint()
+    Vector3 GetMidPoint() // Midpoint between the two top anchors
     {
         return (topLeftPoint.position + topRightPoint.position) / 2f;
     }
