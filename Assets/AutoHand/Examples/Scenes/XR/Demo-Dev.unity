@@ -1782,7 +1782,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e553cf3bb58dc746a4967401eb9fc40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hangDistance: 1
+  hangDistance: 0.5
   ropeWidth: 0.02
   autoUpdateDistance: 1
   isHanging: 0

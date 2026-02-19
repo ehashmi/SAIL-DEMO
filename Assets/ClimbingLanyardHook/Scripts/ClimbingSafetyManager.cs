@@ -11,7 +11,6 @@ public class ClimbingSafetyManager : MonoBehaviour
     private Hand leftHand;
     private Hand rightHand;
     private Rigidbody playerRb;
-    private ConfigurableJoint activeJoint;
     [SerializeField] private bool isHanging = false;
 
     private Hanging hanging;
@@ -37,6 +36,7 @@ public class ClimbingSafetyManager : MonoBehaviour
     void FixedUpdate()
     {
         CheckFallCondition();
+        StopHanging();
     }
 
     void CheckFallCondition()
@@ -92,15 +92,14 @@ public class ClimbingSafetyManager : MonoBehaviour
         Debug.Log($"Starting to Hang! Left Connected: {leftHook.IsConnected()}, Right Connected: {rightHook.IsConnected()}");
         isHanging = true;
         OnHangingStarted.Invoke();
+        hanging.ResetHanging();
         LanyardHook hookToUse = leftHook.IsConnected() ? leftHook : rightHook;
         hanging.AttachToTwoPoints(hookToUse.transform, playerRb.transform);
     }
 
     void StopHanging()
     {
-        isHanging = false;
-
-        if (activeJoint != null)
-            Destroy(activeJoint);
+        if (!isHanging)
+            hanging.Detach();
     }
 }

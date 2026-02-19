@@ -134,4 +134,33 @@ public class Hanging : MonoBehaviour
             line.SetPosition(3, transform.position);
         }
     }
+
+    // 🔥 NEW RESET FUNCTION
+    public void ResetHanging()
+    {
+        // Destroy Joint
+        if (joint != null)
+        {
+            Destroy(joint);
+            joint = null;
+        }
+
+        // Clear anchors
+        anchorA = null;
+        anchorB = null;
+
+        // Stop rope rendering
+        if (line != null)
+        {
+            line.positionCount = 0;
+        }
+
+        // Reset Rigidbody motion (optional but recommended)
+        // if (rb != null)
+        // {
+        //     rb.linearVelocity = Vector3.zero;
+        //     rb.angularVelocity = Vector3.zero;
+        // }
+        isHanging = false;
+    }
 }
