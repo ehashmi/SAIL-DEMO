@@ -48,7 +48,7 @@ MonoBehaviour:
   showPlaceSettings: 1
   startPlaced: {fileID: 0}
   placedOffset: {fileID: 1820830835002217487}
-  placeRadius: 0.02
+  placeRadius: 0.6
   radiusOffset: {x: 0, y: -0.07, z: 0}
   parentOnPlace: 1
   forcePlace: 1
@@ -132,7 +132,7 @@ MonoBehaviour:
   showPlaceSettings: 1
   startPlaced: {fileID: 0}
   placedOffset: {fileID: 5496822316411418085}
-  placeRadius: 0.02
+  placeRadius: 0.6
   radiusOffset: {x: 0, y: -0.07, z: 0}
   parentOnPlace: 1
   forcePlace: 1
